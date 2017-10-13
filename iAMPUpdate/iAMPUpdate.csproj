@@ -36,6 +36,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CommLibrary">
+      <HintPath>..\CommLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="ExtendedString">
       <HintPath>..\..\..\Lib\ExtendedString\ExtendedString\bin\Debug\ExtendedString.dll</HintPath>
     </Reference>

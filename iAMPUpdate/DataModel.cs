@@ -8,6 +8,17 @@ namespace iAMPUpdate
 {
     public class DataModel:NotificationObject
     {
+        private int _ProgressBarMax;
+        public int ProgressBarMax
+        {
+            get { return _ProgressBarMax; }
+            set
+            {
+                _ProgressBarMax = value;
+                OnPropertyChanged("ProgressBarMax");
+            }
+        }
+
         private double _ProgressBarValue;
         public double ProgressBarValue
         {
@@ -16,6 +27,39 @@ namespace iAMPUpdate
             {
                 _ProgressBarValue = value;
                 OnPropertyChanged("ProgressBarValue");
+            }
+        }
+
+        private bool _FirmwareModule;
+        public bool FirmwareModule
+        {
+            get { return _FirmwareModule; }
+            set
+            {
+                _FirmwareModule = value;
+                OnPropertyChanged("FirmwareModule");
+            }
+        }
+
+        private bool _ServiceOnlyModule;
+        public bool ServiceOnlyModule
+        {
+            get { return _ServiceOnlyModule; }
+            set
+            {
+                _ServiceOnlyModule = value;
+                OnPropertyChanged("ServiceOnlyModule");
+            }
+        }
+
+        private string _FileInfo;
+        public string FileInfo
+        {
+            get { return _FileInfo; }
+            set
+            {
+                _FileInfo = value;
+                OnPropertyChanged("FileInfo");
             }
         }
     }

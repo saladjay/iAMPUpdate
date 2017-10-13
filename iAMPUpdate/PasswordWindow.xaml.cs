@@ -25,22 +25,34 @@ namespace iAMPUpdate
             _password = password;
         }
 
+        public bool Result { get; private set; }
+
         private string _password;
 
-        public void Click()
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
-
+            if(passwordbox.Password==_password)
+            {
+                Result = true;
+                this.Close();
+                e.Handled = true;
+            }
+            else
+            {
+                MessageBox.Show("Password is incorrect");
+            }
         }
 
         /*******************************static method*******************************/
-        public bool OpenPassword(string password,Window owner=null)
+        public static bool OpenPassword(string password,Window owner=null)
         {
-            bool Result = true;
+            bool Result = false;
             Application.Current.Dispatcher.Invoke(new Action(() =>
             {
                 PasswordWindow TempWin = new PasswordWindow(password);
-                TempWin.Owner = owner;
+                TempWin.Owner = owner ?? ControlHelper.GetTopWindow();
                 TempWin.ShowDialog();
+                Result = TempWin.Result;
             }));
             return Result;
         }

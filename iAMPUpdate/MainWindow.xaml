@@ -47,7 +47,7 @@
                             <RowDefinition></RowDefinition>
                         </Grid.RowDefinitions>
                         <TextBlock FontSize="15" Grid.Row="0">Info</TextBlock>
-                        <ListBox Grid.Row="1" Margin="5" Height="80"></ListBox>
+                        <TextBlock Grid.Row="1" Margin="5" Height="80"></TextBlock>
                     </Grid>
                     <Button Grid.Column="1" Margin="5"></Button>
                 </Grid>
