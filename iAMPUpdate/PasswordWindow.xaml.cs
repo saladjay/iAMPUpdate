@@ -27,6 +27,11 @@ namespace iAMPUpdate
 
         private string _password;
 
+        public void Click()
+        {
+
+        }
+
         /*******************************static method*******************************/
         public bool OpenPassword(string password,Window owner=null)
         {
