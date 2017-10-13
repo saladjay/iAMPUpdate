@@ -1,0 +1,80 @@
+﻿<Window x:Class="iAMPUpdate.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:iAMPUpdate"
+        mc:Ignorable="d"
+        Title="MainWindow" 
+        ResizeMode="NoResize" Height="300">
+    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"></ColumnDefinition>
+            <ColumnDefinition Width="1*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Orientation="Vertical" Height="auto">
+            <Border BorderThickness="1" BorderBrush="Black" Margin="10,30,10,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.5*"></ColumnDefinition>
+                        <ColumnDefinition Width="1*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <TextBlock FontSize="15" Grid.Row="0">Updata</TextBlock>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal">
+                            <RadioButton Margin="5">Firmware</RadioButton>
+                            <RadioButton Margin="5">Service only</RadioButton>
+                        </StackPanel>
+                        <ProgressBar Grid.Row="2" Height="20" Margin="5"></ProgressBar>
+                    </Grid>
+                    <Button Grid.Column="1" Margin="5"></Button>
+                </Grid>
+            </Border>
+            <Border BorderThickness="1" BorderBrush="Black" Margin="10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.5*"></ColumnDefinition>
+                        <ColumnDefinition Width="1*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <TextBlock FontSize="15" Grid.Row="0">Info</TextBlock>
+                        <ListBox Grid.Row="1" Margin="5" Height="80"></ListBox>
+                    </Grid>
+                    <Button Grid.Column="1" Margin="5"></Button>
+                </Grid>
+            </Border>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Vertical" Height="auto">
+            <StackPanel Orientation="Horizontal" Margin="5">
+                <TextBlock Margin="5" FontSize="19">Status: </TextBlock>
+                <Button>Test USB</Button>
+            </StackPanel>
+            <Grid Margin="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition></ColumnDefinition>
+                    <ColumnDefinition></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="0" Margin="5" FontSize="15">Baud</TextBlock>
+                <ComboBox Grid.Row="0" Grid.Column="1"  Margin="5" ></ComboBox>
+                <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" FontSize="15">COM-port</TextBlock>
+                <ComboBox Grid.Row="1" Grid.Column="1"  Margin="5" ></ComboBox>
+            </Grid>
+            <Button Height="30" Margin="5"></Button>
+            <Button Height="30" Margin="5"></Button>
+            <Button Height="30" Margin="5"></Button>
+        </StackPanel>
+    </Grid>
+</Window>
