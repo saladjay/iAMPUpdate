@@ -58,7 +58,6 @@ namespace iAMPUpdate
             var hwnd = GetForegroundWindow();
             if (hwnd == IntPtr.Zero)
                 return Application.Current.MainWindow;
-
             return GetWindowFromHwnd(hwnd);
         }
     }

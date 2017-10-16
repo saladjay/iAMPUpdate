@@ -43,6 +43,11 @@ namespace iAMPUpdate
             }
         }
 
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Keyboard.Focus(passwordbox);
+        }
+
         /*******************************static method*******************************/
         public static bool OpenPassword(string password,Window owner=null)
         {
@@ -56,5 +61,7 @@ namespace iAMPUpdate
             }));
             return Result;
         }
+
+
     }
 }

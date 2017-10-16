@@ -62,5 +62,16 @@ namespace iAMPUpdate
                 OnPropertyChanged("FileInfo");
             }
         }
+
+        private bool _ConnectionState;
+        public bool ConnectionState
+        {
+            get { return _ConnectionState; }
+            set
+            {
+                _ConnectionState = value;
+                OnPropertyChanged("ConnectionState");
+            }
+        }
     }
 }

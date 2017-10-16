@@ -3,11 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"  
         xmlns:local="clr-namespace:iAMPUpdate"
         mc:Ignorable="d"
         Title="MainWindow" 
         ResizeMode="NoResize" Height="300">
     <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <Grid.DataContext>
+            <local:MainViewModel></local:MainViewModel>
+        </Grid.DataContext>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"></ColumnDefinition>
             <ColumnDefinition Width="1*"></ColumnDefinition>
@@ -27,12 +31,24 @@
                         </Grid.RowDefinitions>
                         <TextBlock FontSize="15" Grid.Row="0">Updata</TextBlock>
                         <StackPanel Grid.Row="1" Orientation="Horizontal">
-                            <RadioButton Margin="5">Firmware</RadioButton>
-                            <RadioButton Margin="5">Service only</RadioButton>
+                            <RadioButton Margin="5" Content="Firmware" IsChecked="{Binding Data.FirmwareModule}" Tag="0" Name="RadioBtn0">
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="Click">
+                                        <i:InvokeCommandAction Command="{Binding RadioBtnCommand}" CommandParameter="{Binding ElementName=RadioBtn0,Path=Tag}"></i:InvokeCommandAction>
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                            </RadioButton>
+                            <RadioButton Margin="5" Content="Service only" IsChecked="{Binding Data.ServiceOnlyModule}" Tag="1" Name="RadioBtn1">
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="Click">
+                                        <i:InvokeCommandAction Command="{Binding RadioBtnCommand}" CommandParameter="{Binding ElementName=RadioBtn1,Path=Tag}"></i:InvokeCommandAction>
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                            </RadioButton>
                         </StackPanel>
                         <ProgressBar Grid.Row="2" Height="20" Margin="5"></ProgressBar>
                     </Grid>
-                    <Button Grid.Column="1" Margin="5"></Button>
+                    <Button Grid.Column="1" Margin="5" Command="{Binding StartUpdateFirmwareCommand}">Start Programming</Button>
                 </Grid>
             </Border>
             <Border BorderThickness="1" BorderBrush="Black" Margin="10">
@@ -49,14 +65,15 @@
                         <TextBlock FontSize="15" Grid.Row="0">Info</TextBlock>
                         <TextBlock Grid.Row="1" Margin="5" Height="80"></TextBlock>
                     </Grid>
-                    <Button Grid.Column="1" Margin="5"></Button>
+                    <Button Grid.Column="1" Margin="5" Command="{Binding OpenFileCommand}">Browse fo update file</Button>
                 </Grid>
             </Border>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Vertical" Height="auto">
             <StackPanel Orientation="Horizontal" Margin="5">
                 <TextBlock Margin="5" FontSize="19">Status: </TextBlock>
-                <Button>Test USB</Button>
+                <Label Margin="10,0" Width="50" Height="30" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Gray" BorderBrush="Black" BorderThickness="2"></Label>
+                <Button Command="{Binding TestSerialCommand}">Test USB</Button>
             </StackPanel>
             <Grid Margin="5">
                 <Grid.ColumnDefinitions>
@@ -68,12 +85,18 @@
                     <RowDefinition></RowDefinition>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Grid.Column="0" Margin="5" FontSize="15">Baud</TextBlock>
-                <ComboBox Grid.Row="0" Grid.Column="1"  Margin="5" ></ComboBox>
+                <ComboBox Grid.Row="0" Grid.Column="1"  Margin="5" SelectedIndex="{Binding SelectedBaudRateIndex,Mode=OneWayToSource}" ItemsSource="{Binding BaudStringArray}"></ComboBox>
                 <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" FontSize="15">COM-port</TextBlock>
-                <ComboBox Grid.Row="1" Grid.Column="1"  Margin="5" ></ComboBox>
+                <ComboBox Grid.Row="1" Grid.Column="1"  Margin="5" SelectedIndex="{Binding SelectedSerialPortIndex,Mode=OneWayToSource}" ItemsSource="{Binding SerialPortNames}">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="DropDownOpened">
+                            <i:InvokeCommandAction Command="{Binding GetSerialPortNameCommand}"></i:InvokeCommandAction>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </ComboBox>
             </Grid>
-            <Button Height="30" Margin="5"></Button>
-            <Button Height="30" Margin="5"></Button>
+            <Button Height="30" Margin="5" Command="{Binding ConnectSerialCommand}" Content="{Binding Data.ConnectionState,Converter={x:Static local:ValueConverter.StateConverter}}"/>
+            <Button Height="30" Margin="5" Command="{Binding ChangePasswordCommand}">Set Default PIN:[1234]</Button>
             <Button Height="30" Margin="5"></Button>
         </StackPanel>
     </Grid>
