@@ -23,6 +23,12 @@ namespace iAMPUpdate
         public MainWindow()
         {
             InitializeComponent();
+            maingrid.DataContext = MainViewModel.GetInstance();
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            Environment.Exit(0);
         }
     }
 }

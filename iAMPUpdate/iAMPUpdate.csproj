@@ -67,6 +67,7 @@
     <Compile Include="DataModel.cs" />
     <Compile Include="FinalConst.cs" />
     <Compile Include="MainViewModel.cs" />
+    <Compile Include="ManagePresetViewModel.cs" />
     <Compile Include="NotificationObject.cs" />
     <Compile Include="PasswordWindow.xaml.cs">
       <DependentUpon>PasswordWindow.xaml</DependentUpon>

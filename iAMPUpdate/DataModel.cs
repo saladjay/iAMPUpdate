@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,7 +31,7 @@ namespace iAMPUpdate
             }
         }
 
-        private bool _FirmwareModule;
+        private bool _FirmwareModule = true;
         public bool FirmwareModule
         {
             get { return _FirmwareModule; }
@@ -63,6 +64,23 @@ namespace iAMPUpdate
             }
         }
 
+        private string _ManagePresetState;
+        public string ManagePresetState
+        {
+            get { return _ManagePresetState; }
+            set
+            {
+                _ManagePresetState = value;
+                OnPropertyChanged("ManagePresetState");
+            }
+        }
+
+        private ObservableCollection<string> _PresetCollection = new ObservableCollection<string>();
+        public ObservableCollection<string> PresetCollection
+        {
+            get { return _PresetCollection; }
+        }
+
         private bool _ConnectionState;
         public bool ConnectionState
         {
@@ -71,6 +89,17 @@ namespace iAMPUpdate
             {
                 _ConnectionState = value;
                 OnPropertyChanged("ConnectionState");
+            }
+        }
+
+        private bool _UpdateState;
+        public bool UpdateState
+        {
+            get { return _UpdateState; }
+            set
+            {
+                _UpdateState = value;
+                OnPropertyChanged("UpdateState");
             }
         }
     }

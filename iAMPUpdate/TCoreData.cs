@@ -13,14 +13,33 @@ namespace iAMPUpdate
         public byte[,] m_preset
         {
             get { return _m_preset; }
-            set { _m_preset = value; }
         }
 
-        private byte[,] _m_memory = new byte[16, 301];
+        private byte[,] _m_Memory = new byte[16, 301];
         public byte[,] m_memory
         {
-            get { return _m_memory; }
-            set { _m_memory = value; }
+            get { return _m_Memory; }
+        }
+
+        private byte[] _m_LocalPreset = new byte[301];
+        public byte[] m_LocalPreset
+        {
+            get { return _m_LocalPreset; }
+        }
+
+        private static TCoreData _CoreDate = null;
+        private TCoreData()
+        {
+
+        }
+
+        public static TCoreData GetInstance()
+        {
+            if (_CoreDate == null)
+            {
+                _CoreDate = new TCoreData();
+            }
+            return _CoreDate;
         }
 
         public void resetPreSetList()
@@ -45,9 +64,16 @@ namespace iAMPUpdate
                     Debug.WriteLine(str);
                 }
             }
+            byte[] tempByteArray = new byte[13];
+            for (int i = 0; i < 13; i++)
+            {
+                tempByteArray[i] = _m_preset[preindex, i];
+            }
             string res = preindex.ToString("x2");
             if (isPre)
-                res += "";
+                res += System.Text.Encoding.ASCII.GetString(tempByteArray, 0, FinalConst.MaxPresetLength - 4);
+            else
+                res = System.Text.Encoding.ASCII.GetString(tempByteArray, 0, FinalConst.MaxPresetLength - 4);
             return res;
         }
 
@@ -56,6 +82,27 @@ namespace iAMPUpdate
             if(preindex>=0&&preindex<16)
             {
 
+            }
+        }
+
+        public void SetLocalPreset(byte[] ByteArray)
+        {
+            int count = 16;
+            for (int i = 0; i < FinalConst.Len_Sence_Pack; i++)
+            {
+                _m_LocalPreset[i] = ByteArray[count++];
+            }
+        }
+
+        public void SetMemory(byte[] ByteArray)
+        {
+            int count = 16;
+            for (int i = 0; i < _m_Memory.GetLength(0); i++)
+            {
+                for (int j = 0; j < _m_Memory.GetLength(1); j++)
+                {
+                    _m_Memory[i, j] = ByteArray[count++];
+                }
             }
         }
     }

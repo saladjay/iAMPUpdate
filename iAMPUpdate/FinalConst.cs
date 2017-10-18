@@ -8,6 +8,11 @@ namespace iAMPUpdate
 {
     class FinalConst
     {
+        public static string PresetFilter = "DSP2188P";
+        public const int MaxLength = 1024;
+        public const int Len_Sence_Pack = 301;
+        public const int MaxPresetLength = 13;
+
         public const int UTRAL_H0 = 0x01;
         public const int UTRAL_H1 = 0x20;
         public const int UTRAL_H2 = 0x03;
@@ -51,5 +56,14 @@ namespace iAMPUpdate
 
         public const int CMD_TYPE_FinishProgram = 0xF1;
         public const int CMD_LEN_FinishProgram = 0x0D;
+
+        public const int CMD_TYPE_MemoryImportFromPC = 0x14;
+        public const int CMD_LEN_MemoryImportFromPC = 301;
+
+        public const int CMD_TYPE_LoadPreset_fromPC = 0x11;
+
+        public const int CMD_TYPE_GETADDRS_RECALL = 0x21;
+
+        public const int CMD_TYPE_CHECK_DEVICE = 0xaa;
     }
 }

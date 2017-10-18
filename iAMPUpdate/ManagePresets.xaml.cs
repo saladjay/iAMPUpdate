@@ -22,6 +22,7 @@ namespace iAMPUpdate
         public ManagePresets()
         {
             InitializeComponent();
+            maingrid.DataContext = MainViewModel.GetInstance();
         }
     }
 }

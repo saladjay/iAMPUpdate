@@ -7,11 +7,11 @@
         xmlns:local="clr-namespace:iAMPUpdate"
         mc:Ignorable="d"
         Title="MainWindow" 
-        ResizeMode="NoResize" Height="300">
-    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-        <Grid.DataContext>
+        ResizeMode="NoResize" Height="300" Closing="Window_Closing">
+    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="maingrid">
+        <!--<Grid.DataContext>
             <local:MainViewModel></local:MainViewModel>
-        </Grid.DataContext>
+        </Grid.DataContext>-->
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"></ColumnDefinition>
             <ColumnDefinition Width="1*"></ColumnDefinition>
@@ -63,7 +63,7 @@
                             <RowDefinition></RowDefinition>
                         </Grid.RowDefinitions>
                         <TextBlock FontSize="15" Grid.Row="0">Info</TextBlock>
-                        <TextBlock Grid.Row="1" Margin="5" Height="80"></TextBlock>
+                        <TextBlock Grid.Row="1" Margin="5" Height="80" Text="{Binding Data.FileInfo}"></TextBlock>
                     </Grid>
                     <Button Grid.Column="1" Margin="5" Command="{Binding OpenFileCommand}">Browse fo update file</Button>
                 </Grid>
@@ -97,7 +97,7 @@
             </Grid>
             <Button Height="30" Margin="5" Command="{Binding ConnectSerialCommand}" Content="{Binding Data.ConnectionState,Converter={x:Static local:ValueConverter.StateConverter}}"/>
             <Button Height="30" Margin="5" Command="{Binding ChangePasswordCommand}">Set Default PIN:[1234]</Button>
-            <Button Height="30" Margin="5"></Button>
+            <Button Height="30" Margin="5" Command="{Binding SavePresetCommand}">Manage Global Presets</Button>
         </StackPanel>
     </Grid>
 </Window>

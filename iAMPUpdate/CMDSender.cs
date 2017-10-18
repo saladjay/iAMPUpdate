@@ -8,6 +8,12 @@ namespace iAMPUpdate
 {
     public class CMDSender
     {
+        private static TCoreData CoreData = null;
+        static CMDSender()
+        {
+            CoreData = TCoreData.GetInstance();
+        }
+
         private static byte[] CreateByteArray(int count,int type)
         {
             byte[] Msg = new byte[count];
@@ -31,61 +37,104 @@ namespace iAMPUpdate
             return Msg;
         }
 
-        public static void sendCMD_finish_program_notice()
+        private static byte[] CalculateCheckBit(byte[] ByteArray)
         {
-            byte[] Msg = CreateByteArray(FinalConst.CMD_LEN_FINISH_PROGRAM,FinalConst.CMD_TYPE_FINISH_PROGRAM);
-
+            byte CheckBit = ByteArray[0];
+            for (int i = 1; i < ByteArray.Length; i++)
+            {
+                CheckBit ^= ByteArray[i];
+            }
+            ByteArray[ByteArray.Length - 2] = CheckBit;
+            return ByteArray;
         }
 
-        public static void sendCMD_GotoReset()
+        public static byte[] sendCMD_finish_program_notice()
         {
-            byte[] Msg = CreateByteArray(FinalConst.CMD_LEN_RESETDEVICE, FinalConst.CMD_TYPE_RESETDEVICE);
+            return CreateByteArray(FinalConst.CMD_LEN_FINISH_PROGRAM,FinalConst.CMD_TYPE_FINISH_PROGRAM);
         }
 
-        public static void sendCMD_UpdateStop()
+        public static byte[] sendCMD_GotoReset()
         {
-            byte[] Msg = CreateByteArray(FinalConst.CMD_LEN_READY_STOP, FinalConst.CMD_TYPE_READY_STOP);
+            return CreateByteArray(FinalConst.CMD_LEN_RESETDEVICE, FinalConst.CMD_TYPE_RESETDEVICE);
         }
 
-        public static void sendCMD_ReadPresetList()
+        public static byte[] sendCMD_UpdateStop()
         {
-            byte[] Msg = CreateByteArray(FinalConst.CMD_LEN_READPRESETLIST, FinalConst.CMD_TYPE_READPRESETLIST);
+            return CreateByteArray(FinalConst.CMD_LEN_READY_STOP, FinalConst.CMD_TYPE_READY_STOP);
         }
 
-        public static void sendCMD_ReadyToProgram()
+        public static byte[] sendCMD_ReadPresetList()
         {
-            byte[] Msg = CreateByteArray(FinalConst.CMD_LEN_READY_PROGRAM, FinalConst.CMD_TYPE_READY_PROGRAM);
+            return CreateByteArray(FinalConst.CMD_LEN_READPRESETLIST, FinalConst.CMD_TYPE_READPRESETLIST);
         }
 
-        public static void sendCMD_BeforeUpdateFirmware()
+        public static byte[] sendCMD_ReadyToProgram(int filelength)
         {
-            byte[] Msg = CreateByteArray(FinalConst.CMD_LEN_DO_PROGRAM, FinalConst.CMD_TYPE_DO_PROGRAM);
+            byte[] ByteArray = CreateByteArray(FinalConst.CMD_LEN_READY_PROGRAM, FinalConst.CMD_TYPE_READY_PROGRAM);
+            ByteArray[11] = (byte)filelength;
+            return CalculateCheckBit(ByteArray);
         }
 
-        public static void sendCMD_UpdateFirmware()
+        public static byte[] sendCMD_BeforeUpdateFirmware()
         {
-            byte[] Msg = CreateByteArray(1024 + 15, FinalConst.CMD_TYPE_DO_PROGRAM);
+            return CreateByteArray(FinalConst.CMD_LEN_DO_PROGRAM, FinalConst.CMD_TYPE_DO_PROGRAM);
         }
 
-        public static void sendCMD_DeleteSinglePreset()
+        public static byte[] sendCMD_UpdateFirmware(int index,byte[] FileSegement)
         {
-            byte[] Msg = CreateByteArray(FinalConst.CMD_LEN_DeletePreset, FinalConst.CMD_TYPE_DeletePreset);
+            byte[] ByteArray = CreateByteArray(1024 + 15, FinalConst.CMD_TYPE_DO_PROGRAM);
+            ByteArray[11] = (byte)(index + 1);
+            ByteArray[12] = (byte)(0xFF - index - 1);
+            Array.Copy(FileSegement, 0, ByteArray, 13, FileSegement.Length);
+            return CalculateCheckBit(ByteArray);
         }
 
-        public static void sendCMD_RecallSinglePreset()
+        public static byte[] sendCMD_DeleteSinglePreset(int index)
         {
-            byte[] Msg = CreateByteArray(FinalConst.CMD_LEN_RecallSinglePreset, FinalConst.CMD_TYPE_RecallSinglePreset);
+            byte[] ByteArray = CreateByteArray(FinalConst.CMD_LEN_DeletePreset, FinalConst.CMD_TYPE_DeletePreset);
+            ByteArray[11] = (byte)index;
+            return CalculateCheckBit(ByteArray);
         }
 
-        public static void sendCMD_RenamePreset(int preindex)
+        public static byte[] sendCMD_RecallSinglePreset(int index)
         {
-            byte[] Msg = CreateByteArray(FinalConst.CMD_LEN_RenamePresetFromPC, FinalConst.CMD_TYPE_RenamePresetFromPC);
+            byte[] ByteArray = CreateByteArray(FinalConst.CMD_LEN_RecallSinglePreset, FinalConst.CMD_TYPE_RecallSinglePreset);
+            ByteArray[11] = (byte)index;
+            return CalculateCheckBit(ByteArray);
         }
 
-        public static void sendCMD_MemoryExport()
+        public static byte[] sendCMD_RenamePreset(int preindex)
         {
-            byte[] Msg = CreateByteArray(FinalConst.CMD_LEN_MemoryExportFromDevice, FinalConst.CMD_LEN_MemoryExportFromDevice);
+            return CreateByteArray(FinalConst.CMD_LEN_RenamePresetFromPC, FinalConst.CMD_TYPE_RenamePresetFromPC);
         }
 
+        public static byte[] sendCMD_MemoryExport(int index)
+        {
+            byte[] ByteArray = CreateByteArray(FinalConst.CMD_LEN_MemoryExportFromDevice, FinalConst.CMD_LEN_MemoryExportFromDevice);
+            ByteArray[11] = (byte)index;
+            return CalculateCheckBit(ByteArray);
+        }
+
+        public static byte[] sendCMD_MemoryImport_Scence(int index)
+        {
+            //return CreateByteArray(FinalConst.CMD_LEN_MemoryImportFromPC, FinalConst.CMD_TYPE_MemoryImportFromPC);
+            byte[] ByteArray = new byte[FinalConst.Len_Sence_Pack];
+            for (int i = 0; i < FinalConst.Len_Sence_Pack; i++)
+            {
+                ByteArray[i] = CoreData.m_memory[index, i];
+            }
+            ByteArray[9] = FinalConst.CMD_TYPE_MemoryImportFromPC / 256;
+            ByteArray[10] = FinalConst.CMD_TYPE_MemoryImportFromPC % 256;
+            return CalculateCheckBit(ByteArray);
+        }
+
+        public static byte[] sendCMD_LoadPresetFromLocal()
+        {
+            byte[] ByteArray = new byte[FinalConst.Len_Sence_Pack];
+            Array.Copy(CoreData.m_LocalPreset, ByteArray, FinalConst.Len_Sence_Pack);
+            ByteArray[9] = FinalConst.CMD_TYPE_LoadPreset_fromPC / 256;
+            ByteArray[10] = FinalConst.CMD_TYPE_LoadPreset_fromPC % 256;
+            return CalculateCheckBit(ByteArray);
+        }
     }
 }
