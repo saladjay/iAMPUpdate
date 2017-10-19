@@ -22,7 +22,7 @@
                 <RowDefinition Height="auto"></RowDefinition>
             </Grid.RowDefinitions>
             <TextBlock FontSize="15" Grid.Row="0">List of Global Presets</TextBlock>
-            <ListBox Grid.Row="1" Height="200"></ListBox>
+            <ListBox Grid.Row="1" Height="200" ItemsSource="{Binding Data.PresetCollection}" SelectedIndex="{Binding SelectedPresetIndex,Mode=OneWayToSource}"></ListBox>
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition></ColumnDefinition>
@@ -30,15 +30,15 @@
                     <ColumnDefinition></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Vertical">
-                    <Button Height="30"></Button>
+                    <Button Height="30" Command="{Binding CreateSinglePresetFileCommand}" FontSize="8">Create single Global Preset file</Button>
                     <TextBlock TextWrapping="Wrap" FontSize="10">Download single Global Preset from device</TextBlock>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Vertical">
-                    <Button Height="30"></Button>
+                    <Button Height="30" Command="{Binding UploadSelectedPresetFileCommand}" FontSize="8">Upload selected Global Preset file</Button>
                     <TextBlock TextWrapping="Wrap" FontSize="10">Upload single Global Preset to device</TextBlock>
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Vertical">
-                    <Button Height="30"></Button>
+                    <Button Height="30" Command="{Binding ResetPresetsCommand}" FontSize="8">Reset Global Preset</Button>
                     <TextBlock TextWrapping="Wrap" FontSize="10">Reset selected Global Preset</TextBlock>
                 </StackPanel>
             </Grid>
@@ -48,12 +48,14 @@
             </StackPanel>
         </Grid>
         <StackPanel Grid.Column="1" Orientation="Vertical">
-            <StackPanel Margin="20,40">
-                <Button Height="50"></Button>
+            <StackPanel Margin="20,30">
+                <TextBlock HorizontalAlignment="Center" Text="{Binding Data.DownloadProgress}"></TextBlock>
+                <Button Height="50" Command="{Binding SavePresetsFileCommand}" FontSize="10">Save Global Presets as File</Button>
                 <TextBlock TextWrapping="Wrap" FontSize="10">Downloads all Global presets from device annd creates a computer file</TextBlock>
             </StackPanel>
-            <StackPanel Margin="20,40">
-                <Button Height="50"></Button>
+            <StackPanel Margin="20,30">
+                <TextBlock HorizontalAlignment="Center" Text="{Binding Data.UploadProgress}"></TextBlock>
+                <Button Height="50" Command="{Binding UploadPresetsToDeviceCommand}" FontSize="8">Upload All Global Presets to device</Button>
                 <TextBlock TextWrapping="Wrap" FontSize="10">Uploads computer file of all Global Presets to device</TextBlock>
             </StackPanel>
         </StackPanel>

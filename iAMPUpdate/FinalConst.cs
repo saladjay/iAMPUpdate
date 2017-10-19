@@ -9,6 +9,8 @@ namespace iAMPUpdate
     class FinalConst
     {
         public static string PresetFilter = "DSP2188P";
+        public static string PresetHeader = "****DSP2188P****";
+        public static string MemoryHeader = "**MemoryDSP218**";
         public const int MaxLength = 1024;
         public const int Len_Sence_Pack = 301;
         public const int MaxPresetLength = 13;

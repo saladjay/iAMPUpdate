@@ -50,7 +50,8 @@ namespace iAMPUpdate
         private byte[] MemoryLoadData;
         private SerialPort MySerialPort = new SerialPort();
         private OpenFileDialog OpenDialog = new OpenFileDialog();
-        private ManagePresets ManagePresetsWin = new ManagePresets();
+        private SaveFileDialog SaveDialog = new SaveFileDialog();
+        private ManagePresets ManagePresetsWin = null;
         private List<byte> Message = new List<byte>();
         private bool ReceiveData = false;
         private System.Timers.Timer ConnectionTimer = new System.Timers.Timer(1000);
@@ -72,7 +73,7 @@ namespace iAMPUpdate
             set { _SelectedBaudRateIndex = value; }
         }
 
-        private int _SelectedPresetIndex;
+        private int _SelectedPresetIndex=-1;
         public int SelectedPresetIndex
         {
             get { return _SelectedPresetIndex; }
@@ -107,13 +108,19 @@ namespace iAMPUpdate
             ConnectionTimer.Elapsed += ConnectionTimer_Elapsed;
             nTimer.Elapsed += NTimer_Elapsed;
             Password = "123";
-            //manage preset
+            for (int i = 0; i < 16; i++)
+            {
+                Data.PresetCollection.Add(i.ToString());
+            }
+            //manage 
             CreateSinglePresetFileCommand = new iAMPUpdate.RelayCommand(CreateSinglePreserFile, CanCreateSinglePresetFile);
             UploadSelectedPresetFileCommand = new RelayCommand(UploadSelectedPresetFile);
             ResetPresetsCommand = new RelayCommand(ResetPresets, CanCreateSinglePresetFile);
             SavePresetsFileCommand = new RelayCommand(SavePresetsFile);
             UploadPresetsToDeviceCommand = new RelayCommand(UploadPresetsToDevice);
         }
+
+        
 
         private void NTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
@@ -306,6 +313,7 @@ namespace iAMPUpdate
             SerialPortSendCMD(CMDSender.sendCMD_ReadPresetList());
             Application.Current.Dispatcher.Invoke(new Action(() =>
             {
+                ManagePresetsWin = new ManagePresets();
                 ManagePresetsWin.ShowDialog();
             }));
         }
@@ -333,6 +341,7 @@ namespace iAMPUpdate
             {
                 if (ReceiveData)
                 {
+                    ConvertToData(Message);
                     ReceiveData = false;
                 }
             }
@@ -426,9 +435,79 @@ namespace iAMPUpdate
                     }
                 case FinalConst.CMD_TYPE_RecallSinglePreset:
                     {
+                        exportPresetDataToFile(package);
+                        break;
+                    }
+                case FinalConst.CMD_TYPE_LoadPreset_fromPC:
+                    {
+
+                        break;
+                    }
+                case FinalConst.CMD_TYPE_MemoryExportFromDevice:
+                    {
+                        int index = package[11];
+                        int Progress = (index + 1) / 16 * 100;
+                        Data.DownloadProgress = string.Format("{0}%", Progress);
+                        if (index>=0&&index<16)
+                        {
+                            for (int i = 0; i < FinalConst.Len_Sence_Pack; i++)
+                            {
+                                CoreData.m_memory[index, i] = package[i];
+                            }
+                            if(index==15)
+                            {
+                                ExportMemoryToFile();
+                            }
+                        }
+                        break;
+                    }
+                case FinalConst.CMD_TYPE_MemoryImportFromPC:
+                    {
+                        int index = package[11];
+                        int Progress = (index + 1) / 16 * 100;
+                        Data.UploadProgress = string.Format("{0}%", Progress);
+                        if(index<15)
+                        {
+                            SerialPortSendCMD(CMDSender.sendCMD_MemoryImport_Scence(index + 1));
+                        }
                         break;
                     }
                     
+            }
+        }
+        private void exportPresetDataToFile(List<byte> temp)
+        {
+            SaveDialog.InitialDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            SaveDialog.Filter = string.Format("PresetExportFile(*%{0})|*%{0}", FinalConst.PresetFilter);
+            if(SaveDialog.ShowDialog()==true)
+            {
+                string FilePath = SaveDialog.FileName;
+                IOBinaryOperation.writeBinaryToFile(FilePath, System.Text.Encoding.ASCII.GetBytes(FinalConst.PresetHeader));
+                IOBinaryOperation.writeBinaryToFile(FilePath, temp.ToArray());
+            }
+        }
+
+        private void ExportMemoryToFile()
+        {
+            if(MessageBox.Show("Global Presets downloaded, are you sure to save as file?","Save Global Presets as file",MessageBoxButton.YesNo)==MessageBoxResult.Yes)
+            {
+                SaveDialog.InitialDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                SaveDialog.Filter = "MemoryExportFile(*.ept)|*.ept";
+                if (SaveDialog.ShowDialog()==true)
+                {
+                    string FilePath = SaveDialog.FileName;
+                    IOBinaryOperation.writeBinaryToFile(FilePath, System.Text.Encoding.ASCII.GetBytes(FinalConst.MemoryHeader));
+                    byte[] temp = new byte[CoreData.m_memory.GetLength(0) * CoreData.m_memory.GetLength(1)];
+                    int count = 0;
+                    for (int i = 0; i < CoreData.m_memory.GetLength(0); i++)
+                    {
+                        for (int j = 0; j < CoreData.m_memory.GetLength(1); j++)
+                        {
+                            temp[count++] = CoreData.m_memory[i, j];
+                        }
+                    }
+                    IOBinaryOperation.writeBinaryToFile(FilePath, temp);
+                }
             }
         }
         #region Command Processing

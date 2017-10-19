@@ -102,5 +102,27 @@ namespace iAMPUpdate
                 OnPropertyChanged("UpdateState");
             }
         }
+
+        private string _DownloadProgress;
+        public string DownloadProgress
+        {
+            get { return _DownloadProgress; }
+            set
+            {
+                _DownloadProgress = value;
+                OnPropertyChanged("DownloadProgress");
+            }
+        }
+
+        private string _UploadProgress;
+        public string UploadProgress
+        {
+            get { return _UploadProgress; }
+            set
+            {
+                _UploadProgress = value;
+                OnPropertyChanged("UploadProgress");
+            }
+        }
     }
 }
