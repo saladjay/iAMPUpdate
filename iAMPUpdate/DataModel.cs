@@ -9,7 +9,7 @@ namespace iAMPUpdate
 {
     public class DataModel:NotificationObject
     {
-        private int _ProgressBarMax;
+        private int _ProgressBarMax = int.MaxValue;
         public int ProgressBarMax
         {
             get { return _ProgressBarMax; }
@@ -20,7 +20,7 @@ namespace iAMPUpdate
             }
         }
 
-        private double _ProgressBarValue;
+        private double _ProgressBarValue = 0;
         public double ProgressBarValue
         {
             get { return _ProgressBarValue; }
@@ -122,6 +122,39 @@ namespace iAMPUpdate
             {
                 _UploadProgress = value;
                 OnPropertyChanged("UploadProgress");
+            }
+        }
+
+        private string _IP;
+        public string IP
+        {
+            get { return _IP; }
+            set
+            {
+                _IP = value;
+                OnPropertyChanged("IP");
+            }
+        }
+
+        private bool _NetConnection;
+        public bool NetConnection
+        {
+            get { return _NetConnection; }
+            set
+            {
+                _NetConnection = value;
+                OnPropertyChanged("ConnectionType");
+            }
+        }
+
+        private bool _AdditionalFunction;
+        public bool AdditionalFunction
+        {
+            get { return _AdditionalFunction; }
+            set
+            {
+                _AdditionalFunction = value;
+                OnPropertyChanged("AdditionalFunction");
             }
         }
     }

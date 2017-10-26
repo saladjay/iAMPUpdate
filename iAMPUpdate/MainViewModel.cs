@@ -10,6 +10,9 @@ using System.Collections.ObjectModel;
 using System.IO.Ports;
 using System.Windows;
 using System.Threading;
+using System.Diagnostics;
+using System.Windows.Input;
+using System.Xml;
 
 namespace iAMPUpdate
 {
@@ -18,17 +21,11 @@ namespace iAMPUpdate
         public RelayCommand<object> RadioBtnCommand { get; private set; }
 
         public RelayCommand OpenFileCommand { get; private set; }
-
         public RelayCommand TestSerialCommand { get; private set; }
-
         public RelayCommand ConnectSerialCommand { get; private set; }
-
         public RelayCommand GetSerialPortNameCommand { get; private set; }
-
         public RelayCommand ChangePasswordCommand { get; private set; }
-
         public RelayCommand StartUpdateFirmwareCommand { get; private set; }
-
         public RelayCommand SavePresetCommand { get; private set; }
 
         public RelayCommand CreateSinglePresetFileCommand { get; private set; }
@@ -37,6 +34,9 @@ namespace iAMPUpdate
         public RelayCommand SavePresetsFileCommand { get; private set; }
         public RelayCommand UploadPresetsToDeviceCommand { get; private set; }
 
+        public RelayCommand IPScanCommand { get; private set; }
+
+        public RelayCommand<object> ConnectionTypeSwitchCommand { get; private set; }
 
         public DataModel Data { get; private set; }
 
@@ -44,16 +44,19 @@ namespace iAMPUpdate
 
         public TCoreData CoreData { get; set; }
 
+        private bool ConnectionType = true;
         private int ModuleType;
         private byte[,] FileData;
         //private byte[] PresetLoadData;
         private byte[] MemoryLoadData;
         private SerialPort MySerialPort = new SerialPort();
+        //private IoSocketProces MyIoSocketPort;
+        private NetCilent MyNetPort;
         private OpenFileDialog OpenDialog = new OpenFileDialog();
         private SaveFileDialog SaveDialog = new SaveFileDialog();
         private ManagePresets ManagePresetsWin = null;
         private List<byte> Message = new List<byte>();
-        private bool ReceiveData = false;
+        private Queue<byte> ByteQueue = new Queue<byte>();
         private System.Timers.Timer ConnectionTimer = new System.Timers.Timer(1000);
         private System.Timers.Timer nTimer = new System.Timers.Timer(500);
         private byte[,] MyPreset = new byte[16,13];
@@ -91,6 +94,7 @@ namespace iAMPUpdate
         private MainViewModel()
         {
             Data = new DataModel();
+            //Data.PropertyChanged += Data_PropertyChanged;
             CoreData = TCoreData.GetInstance();
             RadioBtnCommand = new RelayCommand<object>(RadioPGType2Click);
             OpenFileCommand = new RelayCommand(OpenFile);
@@ -102,12 +106,28 @@ namespace iAMPUpdate
             SavePresetCommand = new RelayCommand(SavePresetExcute,CanSendCMD);
             SerialPortNames = new ObservableCollection<string>();
             MySerialPort.DataReceived += MySerialPort_DataReceived;
+
+
+            //MyIoSocketPort = IoSocketProces.shareIoSocket();
+            //IoSocketProces.ioProc.ReceiveByteEvent += new IoSocketProces.socketReceive(OnReceiveByte);
+            //IoSocketProces.ioProc.SockConnectEvent += new IoSocketProces.socketConnected(socketConnected);
+            //IoSocketProces.ioProc.showSockLog = true;
+            IPScanCommand = new RelayCommand(IPScan);
+
+            ConnectionTypeSwitchCommand = new RelayCommand<object>(ConnectionTypeSwitch);
+
+            MyNetPort = NetCilent.shareCilent();
+            MyNetPort.initSocket();
+            MyNetPort.onConnectedEvent += MyNetPort_onConnectedEvent;
+            MyNetPort.onDisconnectEvent += MyNetPort_onDisconnectEvent;
+            MyNetPort.ReceiveByteEvent += MyNetPort_ReceiveByteEvent;
             Thread Converter = new Thread(new ThreadStart(ConverterLoop));
             Converter.IsBackground = true;
+            Converter.Start();
             ConnectionTimer.AutoReset = false;
             ConnectionTimer.Elapsed += ConnectionTimer_Elapsed;
             nTimer.Elapsed += NTimer_Elapsed;
-            Password = "123";
+            Password = "1234";
             for (int i = 0; i < 16; i++)
             {
                 Data.PresetCollection.Add(i.ToString());
@@ -118,9 +138,114 @@ namespace iAMPUpdate
             ResetPresetsCommand = new RelayCommand(ResetPresets, CanCreateSinglePresetFile);
             SavePresetsFileCommand = new RelayCommand(SavePresetsFile);
             UploadPresetsToDeviceCommand = new RelayCommand(UploadPresetsToDevice);
+            //Additional function
+            if(File.Exists(AppDomain.CurrentDomain.BaseDirectory+"initialfile.xml"))
+            {
+                XmlDocument initialXml = new XmlDocument();
+                initialXml.Load(AppDomain.CurrentDomain.BaseDirectory + "initialfile.xml");
+                XmlElement root = (XmlElement)initialXml.SelectSingleNode("Software");
+                if(root !=null&&root.HasChildNodes)
+                {
+                    foreach (XmlNode item in root.ChildNodes)
+                    {
+                        XmlElement First = (XmlElement)item.FirstChild;
+                        if (First.InnerText == "true")
+                            Data.AdditionalFunction = true;
+                        else
+                            Data.AdditionalFunction = false;
+                    }
+                }
+            }
+            else
+            {
+                XmlDocument InitialXml = new XmlDocument();
+                XmlNode Declaration = InitialXml.CreateXmlDeclaration("1.0", "utf-8", "yes");
+                InitialXml.AppendChild(Declaration);
+                XmlNode Software = InitialXml.CreateElement("Software");
+                InitialXml.AppendChild(Software);
+
+                XmlElement AdditionalFunction = InitialXml.CreateElement("student");
+
+                XmlElement studentName = InitialXml.CreateElement("AdditionalFunction");
+                studentName.AppendChild(InitialXml.CreateTextNode("true"));
+                AdditionalFunction.AppendChild(studentName);
+
+                Software.AppendChild(AdditionalFunction);
+
+                InitialXml.Save(AppDomain.CurrentDomain.BaseDirectory + "initialfile.xml");
+            }
         }
 
-        
+        //private void Data_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        //{
+            
+        //}
+
+        private void ConnectionTypeSwitch(object obj)
+        {
+            ConnectionType = int.Parse(obj.ToString()) == 0;
+        }
+
+        private void MyNetPort_ReceiveByteEvent(int cilentindex, byte[] m_rData, int dlen, EventArgs e)
+        {
+            byte[] newbyte = new byte[dlen];
+            for (int i = 0; i < dlen; i++)
+            {
+                //ByteQueue.Enqueue(m_rData[i]);
+                newbyte[i] = m_rData[i];
+            }
+            ProcessByteArray(newbyte);
+        }
+
+        private void MyNetPort_onDisconnectEvent(int cilentindex, EventArgs e)
+        {
+            Debug.WriteLine("Net disConnect");
+            Data.ConnectionState = MyNetPort.isConnected();
+            Data.NetConnection = MyNetPort.isConnected();
+            RefreshCanExucute();
+        }
+
+        private void MyNetPort_onConnectedEvent(int cilentindex, string conIP, EventArgs e)
+        {
+            Debug.WriteLine("Net Connect");
+            Data.ConnectionState = MyNetPort.isConnected();
+            Data.NetConnection = MyNetPort.isConnected();
+            RefreshCanExucute();
+        }
+
+        private void RefreshCanExucute()
+        {
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                CommandManager.InvalidateRequerySuggested();
+            });
+        }
+
+        //private void socketConnected(string conIP, EventArgs e)
+        //{
+        //    Data.ConnectionState = true;
+        //}
+
+        //private void OnReceiveByte(byte[] m_rData, int dlen, EventArgs e)
+        //{
+        //    ProcessByteArray(m_rData);
+        //}
+
+    
+
+        private void IPScan()
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                WScanForm scanform = new WScanForm();
+                var sres = scanform.ShowDialog();
+                if (sres == true)
+                {
+                    if (!String.IsNullOrEmpty(scanform.getScanedIP()) && scanform.getScanedIP().Count() != 0)
+                        Data.IP = scanform.getScanedIP().Trim();
+                }
+            });
+        }
 
         private void NTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
@@ -141,37 +266,99 @@ namespace iAMPUpdate
 
         private void MySerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            byte[] TempByteArray = new byte[MySerialPort.ReadBufferSize];
+            byte[] TempByteArray = new byte[MySerialPort.BytesToRead];
             MySerialPort.Read(TempByteArray, 0, TempByteArray.Count());
-            MySerialPort.DiscardInBuffer();
+            //foreach (byte item in TempByteArray)
+            //{
+            //    ByteQueue.Enqueue(item);
+            //    //Debug.Write(item.ToString("x2"));
+            //    //Debug.Write("-");
+            //}
+            ////Debug.Write("\n");
+
+            ProcessByteArray(TempByteArray);
+        }
+
+        private void ProcessByteArray(byte[] TempByteArray)
+        {
             foreach (byte item in TempByteArray)
             {
-                if(Message.Count==0&&item!=FinalConst.UTRAL_H0)
+                if (Message.Count == 0 && item != FinalConst.UTRAL_H0)
                 {
                     Message.Clear();
                     break;
                 }
-                if(Message.Count==1&&item!=FinalConst.UTRAL_H1)
+                if (Message.Count == 1 && item != FinalConst.UTRAL_H1)
                 {
                     Message.Clear();
                     break;
                 }
-                if(Message.Count==2&&item!=FinalConst.UTRAL_H2)
+                if (Message.Count == 2 && item != FinalConst.UTRAL_H2)
                 {
                     Message.Clear();
                     break;
                 }
                 Message.Add(item);
-                if(Message.Count>5)
+                if (Message.Count > 5)
                 {
                     int len = Message[3] * 256 + Message[4];
-                    if(Message.Count==len&&Message[len-1]==FinalConst.UTRAL_TAIL)
+                    if (Message.Count == len && Message[len - 1] == FinalConst.UTRAL_TAIL)
                     {
-                        ReceiveData = true;
+                        ConvertToData(Message);
+                        Debug.WriteLine("========================================================");
+                        foreach (byte a in Message)
+                        {
+                            Debug.Write(a.ToString("x2"));
+                            Debug.Write("-");
+                        }
+                        Debug.Write("\n");
+                        Debug.WriteLine("========================================================");
+                        //ReceiveData = true;
+                        Message.Clear();
                     }
                 }
             }
         }
+
+        private void ProcessByteArray(byte item)
+        {
+
+            if (Message.Count == 0 && item != FinalConst.UTRAL_H0)
+            {
+                Message.Clear();
+                return;
+            }
+            if (Message.Count == 1 && item != FinalConst.UTRAL_H1)
+            {
+                Message.Clear();
+                return;
+            }
+            if (Message.Count == 2 && item != FinalConst.UTRAL_H2)
+            {
+                Message.Clear();
+                return;
+            }
+            Message.Add(item);
+            if (Message.Count > 5)
+            {
+                int len = Message[3] * 256 + Message[4];
+                if (Message.Count == len && Message[len - 1] == FinalConst.UTRAL_TAIL)
+                {
+                    ConvertToData(Message);
+                    Debug.WriteLine("========================================================");
+                    foreach (byte a in Message)
+                    {
+                        Debug.Write(a.ToString("x2"));
+                        Debug.Write("-");
+                    }
+                    Debug.Write("\n");
+                    Debug.WriteLine("========================================================");
+                    //ReceiveData = true;
+                    Message.Clear();
+                }
+            }
+        }
+
 
         private void RadioPGType2Click(object Param)
         {
@@ -242,56 +429,96 @@ namespace iAMPUpdate
 
         private void ConnectSerialPort()
         {
-            if (_SelectedBaudRateIndex == -1 || _SelectedSerialPortIndex == -1)
+            
+            if (ConnectionType)
             {
-                MessageBox.Show("please select baud and serialport");
-                return;
-            }
-            if (MySerialPort.IsOpen)
-            {
-                MySerialPort.Close();
+                if (_SelectedBaudRateIndex == -1 || _SelectedSerialPortIndex == -1)
+                {
+                    MessageBox.Show("please select baud and serialport");
+                    return;
+                }
+                if (MySerialPort.IsOpen)
+                {
+                    MySerialPort.Close();
+                    Data.UpdateState = false;                   
+                }
+                else
+                {
+                    MySerialPort.PortName = SerialPortNames[_SelectedSerialPortIndex];
+                    MySerialPort.BaudRate = int.Parse(_BaudStringArray[_SelectedBaudRateIndex]);
+                    try
+                    {
+                        MySerialPort.Open();
+                        Data.NetConnection = false;
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Fail to connect device");
+                    }
+                }
+                Data.ConnectionState = MySerialPort.IsOpen;
             }
             else
             {
-                MySerialPort.PortName = SerialPortNames[_SelectedSerialPortIndex];
-                MySerialPort.BaudRate = int.Parse(_BaudStringArray[_SelectedBaudRateIndex]);
                 try
                 {
-                    MySerialPort.Open();
+                    if (MyNetPort.isConnected())
+                    {
+                        //disconnnect
+                        MyNetPort.disConnect();
+                        Data.UpdateState = false;
+                    }
+                    else
+                    {
+                        string strip = Data.IP;
+                        if (string.IsNullOrEmpty(strip))
+                        {
+                            MessageBox.Show("Ip cannot be empty, please scan device firstly");
+                            return;
+                        }
+                        else if (!UtilCover.IPCheck(strip))
+                        {
+                            MessageBox.Show("Ip inputed is invalided");
+                            return;
+                        }
+                        else if (MyNetPort != null)
+                        {
+                            MyNetPort.connect(Data.IP.Trim());
+                            Data.NetConnection = true;
+                        }
+                    }
                 }
-                catch
+                catch (Exception ec)
                 {
-                    MessageBox.Show("Fail to connect device");
+                    Debug.WriteLine(" proces error  {0}", ec.ToString());
                 }
             }
-            Data.ConnectionState = MySerialPort.IsOpen;
         }
 
         private void TestSerialPort()
         {
-            if (_SelectedBaudRateIndex == -1 || _SelectedSerialPortIndex == -1)
-            {
-                MessageBox.Show("please select baud and serialport");
-                return;
-            }
+            //if (_SelectedBaudRateIndex == -1 || _SelectedSerialPortIndex == -1)
+            //{
+            //    MessageBox.Show("please select baud and serialport");
+            //    return;
+            //}
             byte[] ary = { 0x01, 0x20, 0x03, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x7c, 0x40 };
-            if (MySerialPort.IsOpen)
-            {
-                MySerialPort.Write(ary, 0, ary.Length);//write all byte of ary into serialport;
-                ConnectionTimer.Start();
-            }
+            SerialPortSendCMD(ary);
+            ConnectionTimer.Start();
+
         }
 
         private void ChangePassword()
         {
-            if (_SelectedBaudRateIndex == -1 || _SelectedSerialPortIndex == -1)
-            {
-                MessageBox.Show("please select baud and serialport");
-                return;
-            }
+            //if (_SelectedBaudRateIndex == -1 || _SelectedSerialPortIndex == -1)
+            //{
+            //    MessageBox.Show("please select baud and serialport");
+            //    return;
+            //}
             byte[] ary = { 0x01, 0x20, 0x03, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x01, 0x02, 0x03, 0x04, 0x00, 0x7c, 0x40 };
-            if (MySerialPort.IsOpen)
-                MySerialPort.Write(ary, 0, ary.Length);//write all byte of ary into serialport;
+            SerialPortSendCMD(ary);
+
+ 
         }
 
         private void StartUpdateFirmwareExcute()
@@ -320,7 +547,10 @@ namespace iAMPUpdate
 
         private bool CanSendCMD()
         {
-            return _SelectedBaudRateIndex != -1 && _SelectedSerialPortIndex != -1 && MySerialPort.IsOpen;
+            if (Data.UpdateState)
+                return false;
+            else
+                return Data.ConnectionState;
         }
 
         private bool CanSendupdateFirmware()
@@ -330,19 +560,26 @@ namespace iAMPUpdate
 
         private void SerialPortSendCMD(byte[] message)
         {
-            int count = message.Length;
-            MySerialPort.Write(message, 0, count);
-            MySerialPort.DiscardOutBuffer();
+            if(Data.NetConnection)
+            {
+                if (MyNetPort.isConnected())
+                    MyNetPort.sendByte(message);
+            }
+            else
+            {
+                int count = message.Length;
+                MySerialPort.Write(message, 0, count);
+                MySerialPort.DiscardOutBuffer();
+            }
         }
 
         private void ConverterLoop()
         {
             while (true)
             {
-                if (ReceiveData)
+                if (ByteQueue.Count!=0)
                 {
-                    ConvertToData(Message);
-                    ReceiveData = false;
+                    ProcessByteArray(ByteQueue.Dequeue());
                 }
             }
         }
@@ -425,17 +662,24 @@ namespace iAMPUpdate
                                 CoreData.m_preset[r, i] = package[count++];
                             }
                         }
-                        Data.PresetCollection.Clear();
-                        for (int i = 0; i < 16; i++)
+                        Application.Current.Dispatcher.Invoke(() =>
                         {
-                            Data.PresetCollection.Add(CoreData.gPresetName(i));
-                        }
+                            Data.PresetCollection.Clear();
+                            for (int i = 0; i < 16; i++)
+                            {
+                                Data.PresetCollection.Add(CoreData.gPresetName(i));
+                            }
+                        });
+
                         Data.ManagePresetState = "List of Global Presets completed!";
                         break;
                     }
                 case FinalConst.CMD_TYPE_RecallSinglePreset:
                     {
-                        exportPresetDataToFile(package);
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            exportPresetDataToFile(package);
+                        });
                         break;
                     }
                 case FinalConst.CMD_TYPE_LoadPreset_fromPC:
@@ -456,7 +700,10 @@ namespace iAMPUpdate
                             }
                             if(index==15)
                             {
-                                ExportMemoryToFile();
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    ExportMemoryToFile();
+                                });
                             }
                         }
                         break;
@@ -474,11 +721,15 @@ namespace iAMPUpdate
                     }
                     
             }
+            Message.Clear();
         }
+
         private void exportPresetDataToFile(List<byte> temp)
         {
             SaveDialog.InitialDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            SaveDialog.Filter = string.Format("PresetExportFile(*%{0})|*%{0}", FinalConst.PresetFilter);
+            SaveDialog.Filter = string.Format("PresetExportFile(*.{0})|*.{0}", FinalConst.PresetFilter);
+            SaveDialog.DefaultExt = string.Format(".{0}", FinalConst.PresetFilter);
+            SaveDialog.AddExtension = true;
             if(SaveDialog.ShowDialog()==true)
             {
                 string FilePath = SaveDialog.FileName;

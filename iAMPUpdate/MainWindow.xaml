@@ -7,8 +7,14 @@
         xmlns:local="clr-namespace:iAMPUpdate"
         mc:Ignorable="d"
         Title="MainWindow" 
-        ResizeMode="NoResize" Height="300" Closing="Window_Closing">
-    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="maingrid">
+        ResizeMode="NoResize" Height="300" Width="700" Closing="Window_Closing">
+    <Window.Resources>
+        <local:EnabledConverter2 x:Key="EnableConverter2"></local:EnabledConverter2>
+        <local:EnabledConverter x:Key="EnableConverter"></local:EnabledConverter>
+        <local:ColorConverter x:Key="ColorConverter"></local:ColorConverter>
+        <local:VisibilityConverter x:Key="VisibilityConverter"></local:VisibilityConverter>
+    </Window.Resources>
+    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Name="maingrid" >
         <!--<Grid.DataContext>
             <local:MainViewModel></local:MainViewModel>
         </Grid.DataContext>-->
@@ -46,7 +52,7 @@
                                 </i:Interaction.Triggers>
                             </RadioButton>
                         </StackPanel>
-                        <ProgressBar Grid.Row="2" Height="20" Margin="5"></ProgressBar>
+                        <ProgressBar Grid.Row="2" Height="20" Margin="5" Maximum="{Binding Data.ProgressBarMax}" Value="{Binding Data.ProgressBarValue}"></ProgressBar>
                     </Grid>
                     <Button Grid.Column="1" Margin="5" Command="{Binding StartUpdateFirmwareCommand}">Start Programming</Button>
                 </Grid>
@@ -63,19 +69,41 @@
                             <RowDefinition></RowDefinition>
                         </Grid.RowDefinitions>
                         <TextBlock FontSize="15" Grid.Row="0">Info</TextBlock>
-                        <TextBlock Grid.Row="1" Margin="5" Height="80" Text="{Binding Data.FileInfo}"></TextBlock>
+                        <TextBlock Grid.Row="1" Margin="5" Height="80" Text="{Binding Data.FileInfo}" TextWrapping="Wrap"></TextBlock>
                     </Grid>
-                    <Button Grid.Column="1" Margin="5" Command="{Binding OpenFileCommand}">Browse fo update file</Button>
+                    <Button Grid.Column="1" Margin="5" Command="{Binding OpenFileCommand}" Content="Browse for update file"></Button>
                 </Grid>
             </Border>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Vertical" Height="auto">
             <StackPanel Orientation="Horizontal" Margin="5">
-                <TextBlock Margin="5" FontSize="19">Status: </TextBlock>
-                <Label Margin="10,0" Width="50" Height="30" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Gray" BorderBrush="Black" BorderThickness="2"></Label>
-                <Button Command="{Binding TestSerialCommand}">Test USB</Button>
+                <TextBlock Margin="2" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15">Status: </TextBlock>
+                <Label Margin="10,0" Width="50" Height="30" HorizontalAlignment="Center" VerticalAlignment="Center" Background="{Binding Path=Data.ConnectionState,Converter={StaticResource ColorConverter}}" BorderBrush="Black" BorderThickness="2"></Label>
+                <Button Command="{Binding TestSerialCommand}">Test Connection</Button>
             </StackPanel>
-            <Grid Margin="5">
+            <StackPanel Orientation="Horizontal" IsEnabled="{Binding Path=Data.ConnectionState,Converter={StaticResource EnableConverter}}">
+                <RadioButton Margin="5,0"  IsChecked="True" IsThreeState="False" GroupName="PortType" Tag="0" Name="SerailPortConnection" Content="SerialPort">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="Click">
+                            <i:InvokeCommandAction Command="{Binding ConnectionTypeSwitchCommand}" CommandParameter="{Binding ElementName=SerailPortConnection,Path=Tag}"></i:InvokeCommandAction>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </RadioButton>
+                <RadioButton Margin="5,0" GroupName="PortType" IsThreeState="False" Tag="1" Name="NetPortConnection" Content="NetPort">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="Click">
+                            <i:InvokeCommandAction Command="{Binding ConnectionTypeSwitchCommand}" CommandParameter="{Binding ElementName=NetPortConnection,Path=Tag}"></i:InvokeCommandAction>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </RadioButton>
+            </StackPanel>
+            <Grid Margin="5" Visibility="{Binding ElementName=SerailPortConnection,Path=IsChecked,Converter={StaticResource VisibilityConverter}}">
+                <Grid.IsEnabled>
+                    <MultiBinding Converter="{StaticResource EnableConverter2}">
+                        <Binding Path="Data.UpdateState"></Binding>
+                        <Binding Path="Data.ConnectionState"></Binding>
+                    </MultiBinding>
+                </Grid.IsEnabled>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition></ColumnDefinition>
                     <ColumnDefinition></ColumnDefinition>
@@ -85,7 +113,8 @@
                     <RowDefinition></RowDefinition>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Grid.Column="0" Margin="5" FontSize="15">Baud</TextBlock>
-                <ComboBox Grid.Row="0" Grid.Column="1"  Margin="5" SelectedIndex="{Binding SelectedBaudRateIndex,Mode=OneWayToSource}" ItemsSource="{Binding BaudStringArray}"></ComboBox>
+                <ComboBox Grid.Row="0" Grid.Column="1"  Margin="5" SelectedIndex="{Binding SelectedBaudRateIndex,Mode=OneWayToSource}" ItemsSource="{Binding BaudStringArray}">
+                </ComboBox>
                 <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" FontSize="15">COM-port</TextBlock>
                 <ComboBox Grid.Row="1" Grid.Column="1"  Margin="5" SelectedIndex="{Binding SelectedSerialPortIndex,Mode=OneWayToSource}" ItemsSource="{Binding SerialPortNames}">
                     <i:Interaction.Triggers>
@@ -95,9 +124,26 @@
                     </i:Interaction.Triggers>
                 </ComboBox>
             </Grid>
+            <Grid Margin="5" Visibility="{Binding ElementName=NetPortConnection,Path=IsChecked,Converter={StaticResource VisibilityConverter}}">
+                <Grid.IsEnabled>
+                    <MultiBinding Converter="{StaticResource EnableConverter2}">
+                        <Binding Path="Data.UpdateState"></Binding>
+                        <Binding Path="Data.ConnectionState"></Binding>
+                    </MultiBinding>
+                </Grid.IsEnabled>
+                <Grid.RowDefinitions>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                </Grid.RowDefinitions>
+                <Button Height="30" Margin="5" Command="{Binding IPScanCommand}" >Scan Device</Button>
+                <StackPanel Orientation="Horizontal" Grid.Row="1">
+                    <TextBlock Height="24" Margin="5,0">IP:</TextBlock>
+                    <TextBlock Height="24"  Text="{Binding Data.IP}"></TextBlock>
+                </StackPanel>
+            </Grid>
             <Button Height="30" Margin="5" Command="{Binding ConnectSerialCommand}" Content="{Binding Data.ConnectionState,Converter={x:Static local:ValueConverter.StateConverter}}"/>
-            <Button Height="30" Margin="5" Command="{Binding ChangePasswordCommand}">Set Default PIN:[1234]</Button>
-            <Button Height="30" Margin="5" Command="{Binding SavePresetCommand}">Manage Global Presets</Button>
+            <Button Height="30" Margin="5" Command="{Binding ChangePasswordCommand}" Visibility="{Binding Path=Data.AdditionalFunction,Converter={StaticResource VisibilityConverter}}">Set Default PIN:[1234]</Button>
+            <Button Height="30" Margin="5" Command="{Binding SavePresetCommand}" Visibility="{Binding Path=Data.AdditionalFunction,Converter={StaticResource VisibilityConverter}}">Manage Global Presets</Button>
         </StackPanel>
     </Grid>
 </Window>

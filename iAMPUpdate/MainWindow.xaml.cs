@@ -30,5 +30,7 @@ namespace iAMPUpdate
         {
             Environment.Exit(0);
         }
+
+ 
     }
 }

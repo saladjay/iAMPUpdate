@@ -68,7 +68,10 @@ namespace iAMPUpdate
             for (int i = 0; i < 13; i++)
             {
                 tempByteArray[i] = _m_preset[preindex, i];
+                Debug.Write(tempByteArray[i].ToString("x2"));
+                Debug.Write("-");
             }
+            Debug.Write("\n");
             string res = preindex.ToString("x2");
             if (isPre)
                 res += System.Text.Encoding.ASCII.GetString(tempByteArray, 0, FinalConst.MaxPresetLength - 4);
