@@ -157,5 +157,21 @@ namespace iAMPUpdate
                 OnPropertyChanged("AdditionalFunction");
             }
         }
+
+        public string SoftwareName
+        {
+            get
+            {
+                return _SoftwareName;
+            }
+
+            set
+            {
+                _SoftwareName = value;
+                //OnPropertyChanged("SoftwareName");
+            }
+        }
+
+        private string _SoftwareName;
     }
 }

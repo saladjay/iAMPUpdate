@@ -21,7 +21,7 @@ namespace iAMPUpdate
 
         public const int UTRAL_TAIL = 0x40;
 
-        public static int ID_MACHINE;
+        public static int ID_MACHINE = 24;
 
         public static byte LineID;
         public static byte MachineID;

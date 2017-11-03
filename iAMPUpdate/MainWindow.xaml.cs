@@ -31,6 +31,9 @@ namespace iAMPUpdate
             Environment.Exit(0);
         }
 
- 
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.Title = MainViewModel.GetInstance().Data.SoftwareName;
+        }
     }
 }

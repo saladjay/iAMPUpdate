@@ -148,11 +148,17 @@ namespace iAMPUpdate
                 {
                     foreach (XmlNode item in root.ChildNodes)
                     {
-                        XmlElement First = (XmlElement)item.FirstChild;
-                        if (First.InnerText == "true")
-                            Data.AdditionalFunction = true;
-                        else
-                            Data.AdditionalFunction = false;
+                        if (item.Name.Equals("AdditionalFunction"))
+                        {
+                            if (item.InnerText.ToLower() == "true")
+                                Data.AdditionalFunction = true;
+                            else
+                                Data.AdditionalFunction = false;
+                        }
+                        if (item.Name.Equals("Name"))
+                        {
+                            Data.SoftwareName = ((XmlElement)item).FirstChild.InnerText;
+                        }
                     }
                 }
             }
@@ -164,12 +170,13 @@ namespace iAMPUpdate
                 XmlNode Software = InitialXml.CreateElement("Software");
                 InitialXml.AppendChild(Software);
 
-                XmlElement AdditionalFunction = InitialXml.CreateElement("student");
+                XmlElement Name = InitialXml.CreateElement("Name");
+                Name.AppendChild(InitialXml.CreateTextNode("AR4 UpdateFirmware"));
 
-                XmlElement studentName = InitialXml.CreateElement("AdditionalFunction");
-                studentName.AppendChild(InitialXml.CreateTextNode("true"));
-                AdditionalFunction.AppendChild(studentName);
+                XmlElement AdditionalFunction = InitialXml.CreateElement("AdditionalFunction");
+                AdditionalFunction.AppendChild(InitialXml.CreateTextNode("true"));
 
+                Software.AppendChild(Name);
                 Software.AppendChild(AdditionalFunction);
 
                 InitialXml.Save(AppDomain.CurrentDomain.BaseDirectory + "initialfile.xml");
